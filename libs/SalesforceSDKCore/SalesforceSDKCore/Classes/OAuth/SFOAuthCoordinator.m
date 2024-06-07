@@ -323,7 +323,8 @@
         _view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
         _view.clipsToBounds = YES;
         _view.translatesAutoresizingMaskIntoConstraints = NO;
-        _view.customUserAgent = [SalesforceSDKManager sharedManager].userAgentString(@"");
+        // Client specific change - Commenting out setting customUserAgent to enable support for Recaptcha
+        // _view.customUserAgent = [SalesforceSDKManager sharedManager].userAgentString(@"");
         if (@available(iOS 16.4, *)) {
             _view.inspectable = [SalesforceSDKManager sharedManager].isLoginWebviewInspectable;
         }
