@@ -52,9 +52,7 @@ static NSString * const kAuthConfigLoginPageUrlKey     = @"LoginPageUrl";
 }
 
 - (BOOL)useNativeBrowserForAuth {
-// Client specific change - Enabling Native BrowserForAuth to enable support for Recaptcha
-//    return [self.authConfigDict[kAuthConfigMobileSDKKey][kAuthConfigUseNativeBrowserKey] boolValue];
-    return true;
+    return [self.authConfigDict[kAuthConfigMobileSDKKey][kAuthConfigUseNativeBrowserKey] boolValue];
 }
 
 - (BOOL)shareBrowserSession {
