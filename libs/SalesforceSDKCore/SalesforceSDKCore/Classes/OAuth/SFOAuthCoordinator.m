@@ -323,8 +323,11 @@
         _view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
         _view.clipsToBounds = YES;
         _view.translatesAutoresizingMaskIntoConstraints = NO;
-        // Client specific change - Commenting out setting customUserAgent to enable support for Recaptcha
+        // MARK: - Client specific change to add own custom user agent to enable support for Recaptcha and to append "SalesforceMobileSDK" to default user agent for MOA
         // _view.customUserAgent = [SalesforceSDKManager sharedManager].userAgentString(@"");
+        [_view evaluateJavaScript:@"navigator.userAgent" completionHandler:^(id _Nullable result, NSError * _Nullable error) {
+            self->_view.customUserAgent = [result stringByAppendingString:@" SalesforceMobileSDK"];
+        }];
         if (@available(iOS 16.4, *)) {
             _view.inspectable = [SalesforceSDKManager sharedManager].isLoginWebviewInspectable;
         }
