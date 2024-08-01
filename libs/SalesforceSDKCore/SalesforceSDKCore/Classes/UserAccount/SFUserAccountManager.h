@@ -137,6 +137,10 @@ FOUNDATION_EXTERN NSString * const SFUserAccountManagerUserChangeUserKey NS_SWIF
  */
 FOUNDATION_EXTERN NSString * const kSFNotificationUserInfoAccountKey NS_SWIFT_NAME(UserAccountManager.userInfoAccountKey);
 
+/**  Key to use to lookup logout reason associated with NSNotification log out events.
+ */
+FOUNDATION_EXTERN NSString * const kSFNotificationUserInfoLogoutReasonKey NS_SWIFT_NAME(UserAccountManager.userInfoLogoutReasonKey);
+
 /**  Key to use to lookup credentials associated with  NSNotification userInfo.
  */
 FOUNDATION_EXTERN NSString * const kSFNotificationUserInfoCredentialsKey NS_SWIFT_NAME(UserAccountManager.userInfoCredentialsKey);
@@ -515,11 +519,19 @@ Use this method to stop/clear any authentication which is has already been start
 @param completionBlock The completion block is called with YES if a session was cleared successfully. 
 */
 - (void)stopCurrentAuthentication:(nullable void (^)(BOOL))completionBlock;
+
 /**
  Forces a logout from the current account, redirecting the user to the login process.
  This throws out the OAuth refresh token.
  */
 - (void)logout;
+
+/**
+ Forces a logout from the current account, redirecting the user to the login process.
+ This throws out the OAuth refresh token.
+ @param reason The reason that log out was initiated.
+ */
+- (void)logout:(SFLogoutReason)reason;
 
 /**
  Performs a logout on the specified user.  Note that if the user is not the current user of the app, the
@@ -528,6 +540,15 @@ Use this method to stop/clear any authentication which is has already been start
  @param user The user to log out.
  */
 - (void)logoutUser:(SFUserAccount *)user NS_SWIFT_NAME(logout(_:));
+
+/**
+ Performs a logout on the specified user.  Note that if the user is not the current user of the app, the
+ specified user's authenticated state will be removed, but no other action will otherwise interrupt the
+ current app state.
+ @param user The user to log out.
+ @param reason The reason that log out was initiated.
+ */
+- (void)logoutUser:(SFUserAccount *)user reason:(SFLogoutReason)reason NS_SWIFT_NAME(logout(_:reason:));
 
 /**
  Performs a logout for all users of the app, including the current user.
