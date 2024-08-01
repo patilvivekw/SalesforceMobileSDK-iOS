@@ -1714,10 +1714,21 @@ static NSString * const kSFGenericFailureAuthErrorHandler = @"GenericFailureErro
                 NSError *error = [NSError errorWithDomain:kSFOAuthErrorDomain code:kSFOAuthErrorAccessDenied userInfo:nil];
                 [self handleFailure:error session:coordinator.authSession];
             } else {
-                SFIdentityCoordinator *identityCoordinator = [[SFIdentityCoordinator alloc] initWithAuthSession:coordinator.authSession];
-                self.authSessions[coordinator.authSession.sceneId].identityCoordinator = identityCoordinator;
-                identityCoordinator.delegate = self;
-                [identityCoordinator initiateIdentityDataRetrieval];
+                // MARK: - Client specific change - skip ID call for now
+//                SFIdentityCoordinator *identityCoordinator = [[SFIdentityCoordinator alloc] initWithAuthSession:coordinator.authSession];
+//                self.authSessions[coordinator.authSession.sceneId].identityCoordinator = identityCoordinator;
+//                identityCoordinator.delegate = self;
+//                [identityCoordinator initiateIdentityDataRetrieval];
+
+                if (SalesforceSDKManager.sharedManager.useWebServerAuthentication) {
+                    [self finalizeAuthCompletion:coordinator.authSession];
+                    [self dismissAuthViewControllerIfPresent];
+                } else {
+                    SFIdentityCoordinator *identityCoordinator = [[SFIdentityCoordinator alloc] initWithAuthSession:coordinator.authSession];
+                    self.authSessions[coordinator.authSession.sceneId].identityCoordinator = identityCoordinator;
+                    identityCoordinator.delegate = self;
+                    [identityCoordinator initiateIdentityDataRetrieval];
+                }
             }
         } errorBlock:^(NSError *error) {
             [self handleFailure:error session:coordinator.authSession];
