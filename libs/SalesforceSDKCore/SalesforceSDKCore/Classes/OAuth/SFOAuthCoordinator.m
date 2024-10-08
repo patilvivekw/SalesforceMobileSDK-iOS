@@ -823,6 +823,7 @@
 
 - (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation {
     NSURL *url = [webView URL];
+    SalesforceSDKManager.sharedManager.returnToLoginBlock(url.absoluteString);
     [SFSDKCoreLogger i:[self class] format:@"%@ host=%@ : path=%@", NSStringFromSelector(_cmd), url.host, url.path];
     if ([self.delegate respondsToSelector:@selector(oauthCoordinator:didStartLoad:)]) {
         [self.delegate oauthCoordinator:self didStartLoad:webView];

@@ -254,6 +254,11 @@ NS_SWIFT_NAME(SalesforceManager)
 @property (nonatomic, assign) BOOL blockSalesforceIntegrationUser;
 
 /**
+ Back to login callback
+ */
+@property (nonatomic, copy) void (^returnToLoginBlock)(NSString *currentURL);
+
+/**
  Initializes the SDK.
  */
 + (void)initializeSDK;
