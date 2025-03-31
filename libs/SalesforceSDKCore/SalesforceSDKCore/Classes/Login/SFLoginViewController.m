@@ -95,6 +95,8 @@
     if (bioAuthManager.locked && bioAuthManager.hasBiometricOptedIn) {
         [bioAuthManager presentBiometricWithScene:self.view.window.windowScene];
     }
+    
+    [self registerForTraitChanges:@[UITraitDisplayScale.class] withAction:@selector(setupNavigationBar)];
 }
 
 - (CGFloat) belowFrame:(CGRect) frame {
@@ -195,32 +197,35 @@
 #pragma mark - Setup Navigation bar
 
 - (void)setupNavigationBar {
-    
-    self.navBar = self.navigationController.navigationBar;
-    self.navBar.topItem.titleView = [self createTitleItem];
-    // Hides the gear icon if there are no hosts to switch to.
-    SFManagedPreferences *managedPreferences = [SFManagedPreferences sharedPreferences];
-    if (managedPreferences.onlyShowAuthorizedHosts && managedPreferences.loginHosts.count == 0) {
-        self.config.showSettingsIcon = NO;
+    if (self.showNavbar) {
+        self.navBar = self.navigationController.navigationBar;
+        self.navBar.topItem.titleView = [self createTitleItem];
+        // Hides the gear icon if there are no hosts to switch to.
+        SFManagedPreferences *managedPreferences = [SFManagedPreferences sharedPreferences];
+        if (managedPreferences.onlyShowAuthorizedHosts && managedPreferences.loginHosts.count == 0) {
+            self.config.showSettingsIcon = NO;
+        }
+        if(self.showSettingsIcon) {
+            // Setup right bar button.
+            UIBarButtonItem *button = [self createSettingsButton];
+            if (!button.target){
+                [button setTarget:self];
+            }
+            if (!button.action){
+                [button setAction:@selector(showLoginHost:)];
+            }
+            self.navBar.topItem.rightBarButtonItem = button;
+        }
+        [self styleNavigationBar:self.navBar];
+        
+        if (self.navigationController == nil) {
+            [self.view addSubview:self.navBar];
+        }
+        
+        #if !TARGET_OS_VISION
+        [self setNeedsStatusBarAppearanceUpdate];
+        #endif
     }
-    if(self.showSettingsIcon) {
-        // Setup right bar button.
-       UIBarButtonItem *button = [self createSettingsButton];
-       if (!button.target){
-           [button setTarget:self];
-       }
-       if (!button.action){
-           [button setAction:@selector(showLoginHost:)];
-       }
-       self.navBar.topItem.rightBarButtonItem = button;
-    }
-    [self styleNavigationBar:self.navBar];
-    
-    if (self.navigationController == nil) {
-        [self.view addSubview:self.navBar];
-    }
-    
-    [self setNeedsStatusBarAppearanceUpdate];
 }
 
 - (void)setupBackButton {
@@ -275,19 +280,20 @@
     }
     if (self.config.navBarFont) {
         item.font = self.config.navBarFont;
+    } else {
+        item.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
     }
+    
     item.text = title;
-    [item sizeToFit];
+    item.textAlignment = NSTextAlignmentCenter;
+    item.adjustsFontForContentSizeCategory = YES;
     return item;
 }
 
 - (SFSDKLoginHostListViewController *)createLoginHostListViewController {
     SFSDKLoginHostListViewController *loginHostListViewController = [[SFSDKLoginHostListViewController alloc] initWithStyle:UITableViewStylePlain];
+    loginHostListViewController.config = self.config;
     return loginHostListViewController;
-}
-
-- (BOOL)shouldAutorotate {
-    return YES;
 }
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
@@ -336,7 +342,7 @@
     return _loginHostListViewController;
 }
 
-#pragma mark - Properties`
+#pragma mark - Properties
 
 - (void)setOauthView:(UIView *)oauthView {
     if (![oauthView isEqual:_oauthView]) {

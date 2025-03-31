@@ -336,6 +336,10 @@ NS_SWIFT_NAME(UserAccountManager)
  */
 @property (nonatomic, copy, nullable) WKNavigationActionPolicy (^navigationPolicyForAction)(WKWebView *webview, WKNavigationAction *action);
 
+/** Use this to add custom handling for WKUIDelegate's `webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:`
+ */
+@property (nonatomic, copy, nullable) WKWebView * _Nullable (^createWebview)(WKWebView *webview, WKWebViewConfiguration *configuration, WKNavigationAction *action, WKWindowFeatures *windowFeatures);
+
 /**  Use this property to enable an app to become and IdentityProvider for other apps
  *
  */
@@ -366,6 +370,11 @@ NS_SWIFT_NAME(UserAccountManager)
  * Indicates that that web based authentication should be used instead of native login.
  */
 @property (nonatomic, assign) BOOL shouldFallbackToWebAuthentication;
+
+/**
+ *  If true, present the auth window while the webview is loading. Otherwise wait to present the auth window until the webview has finished loading
+ */
+@property (nonatomic, assign) BOOL showAuthWindowWhileLoading;
 
 /** Shared singleton
  */

@@ -67,15 +67,20 @@ enum {
 };
 
 typedef NS_ENUM(NSInteger, SFLogoutReason) {
-    SFLogoutReasonCorruptState,       // "Corrupted client state"
-    SFLogoutReasonTokenExpired,       // "Refresh token expired"
-    SFLogoutReasonSSDKPolicy,         // "SSDK initiated logout for policy violation"
-    SFLogoutReasonTimeout,            // "Timeout while waiting for server response"
-    SFLogoutReasonUnexpected,         // "Unexpected error or crash"
-    SFLogoutReasonUnexpectedResponse, // "Unexpected response from server"
-    SFLogoutReasonUnknown,            // "Unknown"
-    SFLogoutReasonUserInitiated,      // "User initiated logout"
-    SFLogoutReasonRefreshTokenRotated // "Refresh token rotated"
+    SFLogoutReasonCorruptState,                     // Corrupted client state
+    SFLogoutReasonCorruptStateAppConfigurationSettings,    // bad configuration settings
+    SFLogoutReasonCorruptStateAppProviderErrorInvalidUser, // invalid user
+    SFLogoutReasonCorruptStateAppInvalidRestClient, // invalid rest client
+    SFLogoutReasonCorruptStateAppOther,             // other
+    SFLogoutReasonCorruptStateMSDK,                 // Corrupted client state detected by Mobile SDK
+    SFLogoutReasonTokenExpired,                     // Refresh token expired
+    SFLogoutReasonSSDKPolicy,                       // SSDK initiated logout for policy violation
+    SFLogoutReasonTimeout,                          // Timeout while waiting for server response
+    SFLogoutReasonUnexpected,                       // Unexpected error or crash
+    SFLogoutReasonUnexpectedResponse,               // Unexpected response from server
+    SFLogoutReasonUnknown,                          // Unknown
+    SFLogoutReasonUserInitiated,                    // User initiated logout
+    SFLogoutReasonRefreshTokenRotated               // Refresh token rotated
 };
 
 NS_ASSUME_NONNULL_BEGIN
@@ -121,6 +126,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, nullable) NSString *contentDomain;
 @property (nonatomic, readonly, nullable) NSString *contentSid;
 @property (nonatomic, readonly, nullable) NSString *csrfToken;
+@property (nonatomic, readonly, nullable) NSString *cookieClientSrc;
+@property (nonatomic, readonly, nullable) NSString *cookieSidClient;
+@property (nonatomic, readonly, nullable) NSString *sidCookieName;
+@property (nonatomic, readonly, nullable) NSString *parentSid;
+@property (nonatomic, readonly, nullable) NSString *tokenFormat;
 - (NSDictionary *)asDictionary;
 @end
 
@@ -128,11 +138,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)accessTokenForApprovalCode:(SFSDKOAuthTokenEndpointRequest *)endpointReq completion:(void (^)(SFSDKOAuthTokenEndpointResponse *))completionBlock;
 - (void)accessTokenForRefresh:(SFSDKOAuthTokenEndpointRequest *)endpointReq completion:(void (^)(SFSDKOAuthTokenEndpointResponse *))completionBlock;
 - (void)openIDTokenForRefresh:(SFSDKOAuthTokenEndpointRequest *)endpointReq completion:(void (^)(NSString *))completionBlock;
-- (void)revokeRefreshToken:(SFOAuthCredentials *)credentials SFSDK_DEPRECATED(12.1, 13.0, "Will be replaced by revokeRefreshToken:reason:");
-
-@optional
 - (void)revokeRefreshToken:(SFOAuthCredentials *)credentials reason:(SFLogoutReason)reason;
-
 @end
 
 @protocol SFSDKOAuthSessionManaging<NSObject>

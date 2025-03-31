@@ -33,6 +33,7 @@
 #import "SFRestAPI+Blocks.h"
 #import "SFSDKPushNotificationEncryptionConstants.h"
 #import "SFSDKCryptoUtils.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 static NSString* const kSFDeviceToken = @"deviceToken";
 static NSString* const kSFDeviceSalesforceId = @"deviceSalesforceId";
@@ -65,6 +66,7 @@ static NSString * const kSFAppFeaturePushNotifications = @"PN";
 #else
         self.isSimulator = NO;
 #endif
+        _registerOnForeground = YES;
         // Queue for requests
         _queue = [[NSOperationQueue alloc] init];
         
@@ -152,10 +154,7 @@ static NSString * const kSFAppFeaturePushNotifications = @"PN";
     if (rsaPublicKey) {
         bodyDict[@"RsaPublicKey"] = rsaPublicKey;
     }
-    // TODO remove once MSDK default api version is 61 or greater
-    if ([[SFRestAPI sharedInstance].apiVersion compare:@"v61.0"] >= 0) {
-        bodyDict[@"CipherName"] = @"RSA_OAEP_SHA256";
-    }
+    bodyDict[@"CipherName"] = @"RSA_OAEP_SHA256";
 
     [request setCustomRequestBodyDictionary:bodyDict contentType:@"application/json"];
     __weak typeof(self) weakSelf = self;
@@ -184,7 +183,14 @@ static NSString * const kSFAppFeaturePushNotifications = @"PN";
             [[SFPreferences currentUserLevelPreferences] setObject:strongSelf->_deviceSalesforceId forKey:kSFDeviceSalesforceId];
             [[SFPreferences currentUserLevelPreferences] synchronize];
             [SFSDKCoreLogger i:[strongSelf class] format:@"Response:%@", responseAsJson];
-            [strongSelf postPushNotificationRegistration:completionBlock];
+            [strongSelf fetchAndStoreNotificationTypesWithRestClient:[SFRestAPI sharedInstance]
+                                                             account:user
+                                                   completionHandler:^(NSError * _Nullable error) {
+                if (error != nil) {
+                    [SFSDKCoreLogger e:[strongSelf class] format:@"Get Notification Types Error: %@", [error localizedDescription]];
+                }
+                [strongSelf postPushNotificationRegistration:completionBlock];
+            }];
         }
     }];
     return YES;
@@ -271,10 +277,14 @@ static NSString * const kSFAppFeaturePushNotifications = @"PN";
 }
 
 - (void)onAppWillEnterForeground:(NSNotification *)notification {
-    // Re-registering with Salesforce if we have a device token unless we are logging out
+    // If enabled, re-registering with Salesforce if we have a device token unless we are logging out
     if (![SFUserAccountManager sharedInstance].logoutSettingEnabled && self.deviceToken) {
-        [SFSDKCoreLogger i:[self class] format:@"Re-registering for Salesforce notification because application is being foregrounded"];
-        [self registerSalesforceNotificationsWithCompletionBlock:nil failBlock:nil];
+        if (self.registerOnForeground) {
+            [SFSDKCoreLogger i:[self class] format:@"Re-registering for Salesforce notification because application is being foregrounded"];
+            [self registerSalesforceNotificationsWithCompletionBlock:nil failBlock:nil];
+        } else {
+            [SFSDKCoreLogger i:[self class] format:@"Skipping push notification re-registration on foreground because it's disabled"];
+        }
     }
 }
 

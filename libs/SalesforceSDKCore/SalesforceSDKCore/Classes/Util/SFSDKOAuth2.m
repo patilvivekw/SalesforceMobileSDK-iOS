@@ -176,6 +176,26 @@ const NSTimeInterval kSFOAuthDefaultTimeout  = 120.0; // seconds
     return self.values[kSFOAuthCSRFToken];
 }
 
+- (NSString *)cookieClientSrc {
+    return self.values[kSFOAuthCookieClientSrc];
+}
+
+- (NSString *)cookieSidClient {
+    return self.values[kSFOAuthCookieSidClient];
+}
+
+- (NSString *)sidCookieName {
+    return self.values[kSFOAuthSidCookieName];
+}
+
+- (NSString *)parentSid {
+    return self.values[kSFOAuthParentSid];
+}
+
+- (NSString *)tokenFormat {
+    return self.values[kSFOAuthTokenFormat];
+}
+
 - (NSURL *)communityUrl {
     if (_values[kSFOAuthCommunityUrl]) {
         return [NSURL URLWithString:self.values[kSFOAuthCommunityUrl]];
@@ -261,6 +281,7 @@ const NSTimeInterval kSFOAuthDefaultTimeout  = 120.0; // seconds
     NSURLSession *session = [self createURLSessionWithIdentifier:instanceIdentifier];
 
     __weak typeof(self) weakSelf = self;
+    NSString *className = NSStringFromClass([self class]);
     [[session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *urlResponse, NSError *error) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         SFSDKOAuthTokenEndpointResponse *endpointResponse = nil;
@@ -273,21 +294,29 @@ const NSTimeInterval kSFOAuthDefaultTimeout  = 120.0; // seconds
             endpointResponse = [[SFSDKOAuthTokenEndpointResponse alloc] initWithError:[NSError errorWithDomain:kSFOAuthErrorDomain code:code userInfo:nil]];
             
             if (error.code == NSURLErrorTimedOut) {
-                [SFSDKCoreLogger d:[strongSelf class] format:@"Refresh attempt timed out after %f seconds.", endpointReq.timeout];
+                [SFSDKCoreLogger d:[SFSDKOAuth2 class] format:@"Refresh attempt timed out after %f seconds.", endpointReq.timeout];
             }
             
-            [SFSDKCoreLogger d:[strongSelf class] format:@"SFOAuth2 session failed with error: error code: %ld, description: %@, URL: %@", (long)error.code, [error localizedDescription], errorUrlString];
+            [SFSDKCoreLogger d:[SFSDKOAuth2 class] format:@"SFOAuth2 session failed with error: error code: %ld, description: %@, URL: %@", (long)error.code, [error localizedDescription], errorUrlString];
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (completionBlock) {
                     completionBlock(endpointResponse);
                 }
             });
             return;
-        } else {
-            [SFSDKEventBuilderHelper createAndStoreEvent:@"tokenRefresh" userAccount:[SFUserAccountManager sharedInstance].currentUser className:NSStringFromClass([strongSelf class]) attributes:nil];
         }
         
-        [strongSelf handleTokenEndpointResponse:completionBlock request:endpointReq data:data urlResponse:urlResponse];
+        [SFSDKEventBuilderHelper createAndStoreEvent:@"tokenRefresh" userAccount:[SFUserAccountManager sharedInstance].currentUser className:className attributes:nil];
+        if (strongSelf) {
+            [strongSelf handleTokenEndpointResponse:completionBlock request:endpointReq data:data urlResponse:urlResponse];
+        } else {
+            [SFSDKCoreLogger d:[SFSDKOAuth2 class] format:@"Token endpoint response handler skipped because self was deallocated."];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (completionBlock) {
+                    completionBlock(nil);
+                }
+            });
+        }
     }] resume];
 }
 
@@ -365,10 +394,6 @@ const NSTimeInterval kSFOAuthDefaultTimeout  = 120.0; // seconds
     }
 }
 
-- (void)revokeRefreshToken:(SFOAuthCredentials *)credentials {
-    [self revokeRefreshToken:credentials reason:SFLogoutReasonUnknown];
-}
-
 - (void)revokeRefreshToken:(SFOAuthCredentials *)credentials reason:(SFLogoutReason)reason {
     if (credentials.refreshToken != nil) {
         NSMutableURLRequest *request = [SFSDKOAuth2 requestForRevokeRefreshToken:credentials reason:reason];
@@ -400,6 +425,16 @@ const NSTimeInterval kSFOAuthDefaultTimeout  = 120.0; // seconds
     switch(reason) {
         case SFLogoutReasonCorruptState:
             return @"corrupt_state";
+        case SFLogoutReasonCorruptStateAppConfigurationSettings:
+            return @"corrupt_state_app_configuration_settings";
+        case SFLogoutReasonCorruptStateAppProviderErrorInvalidUser:
+            return @"corrupt_state_app_provider_error_invalid_user";
+        case SFLogoutReasonCorruptStateAppInvalidRestClient:
+            return @"corrupt_state_app_invalid_restclient";
+        case SFLogoutReasonCorruptStateAppOther:
+            return @"corrupt_state_app_other";
+        case SFLogoutReasonCorruptStateMSDK:
+            return @"corrupt_state_msdk";
         case SFLogoutReasonUserInitiated:
             return @"user_logout";
         case SFLogoutReasonUnknown:

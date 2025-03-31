@@ -57,12 +57,12 @@ NSString *SFAppTypeGetDescription(SFAppType appType) NS_SWIFT_NAME(getter:SFAppT
 /**
  Block typedef for presenting the snapshot view controller.
  */
-typedef void (^SFSnapshotViewControllerPresentationBlock)(UIViewController* snapshotViewController) NS_SWIFT_NAME(SalesforceManager.SnapshotViewDisplayBlock);
+typedef void (^SFSnapshotViewControllerPresentationBlock)(UIViewController* snapshotViewController) NS_SWIFT_NAME(SalesforceManager.SnapshotViewDisplayBlock) API_UNAVAILABLE(visionos);
 
 /**
  Block typedef for dismissing the snapshot view controller.
  */
-typedef void (^SFSnapshotViewControllerDismissalBlock)(UIViewController* snapshotViewController) NS_SWIFT_NAME(SalesforceManager.SnapshotViewDismissBlock);
+typedef void (^SFSnapshotViewControllerDismissalBlock)(UIViewController* snapshotViewController) NS_SWIFT_NAME(SalesforceManager.SnapshotViewDismissBlock) API_UNAVAILABLE(visionos);
 
 NS_SWIFT_NAME(DevAction)
 @interface SFSDKDevAction : NSObject
@@ -187,14 +187,14 @@ NS_SWIFT_NAME(SalesforceManager)
  @discussion
  This block is only invoked if the dismissal action is also set.
  */
-@property (nonatomic, copy, nullable) SFSnapshotViewControllerPresentationBlock snapshotPresentationAction NS_SWIFT_NAME(snapshotViewPresentationHandler);
+@property (nonatomic, copy, nullable) SFSnapshotViewControllerPresentationBlock snapshotPresentationAction NS_SWIFT_NAME(snapshotViewPresentationHandler) API_UNAVAILABLE(visionos);
 
 /**
  The block to execute to dismiss the snapshot viewcontroller.
  @discussion
  This block is only invoked if the presentation action is also set.
  */
-@property (nonatomic, copy, nullable) SFSnapshotViewControllerDismissalBlock snapshotDismissalAction NS_SWIFT_NAME(snapshotViewDismissalHandler);
+@property (nonatomic, copy, nullable) SFSnapshotViewControllerDismissalBlock snapshotDismissalAction NS_SWIFT_NAME(snapshotViewDismissalHandler) API_UNAVAILABLE(visionos);
 
 /**
  Gets or sets a block that will return a user agent string, created with an optional qualifier.
@@ -221,7 +221,7 @@ NS_SWIFT_NAME(SalesforceManager)
  */
 @property (nonatomic, assign) BOOL isDevSupportEnabled;
 
-/** Use this flag to indicate if the login webview should be inspectable (NB: only applies to iOS 16.4 and above)
+/** Use this flag to indicate if the login webview should be inspectable
  */
 @property (nonatomic, assign) BOOL isLoginWebviewInspectable;
 
