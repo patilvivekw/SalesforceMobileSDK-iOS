@@ -866,15 +866,52 @@
 
 - (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation {
     NSURL *url = [webView URL];
-    SalesforceSDKManager.sharedManager.loginWebViewURLDidChange(url.absoluteString);
-    [SFSDKCoreLogger i:[self class] format:@"%@ host=%@ : path=%@", NSStringFromSelector(_cmd), url.host, url.path];
-    if ([self.delegate respondsToSelector:@selector(oauthCoordinator:didStartLoad:)]) {
-        [self.delegate oauthCoordinator:self didStartLoad:webView];
+    NSString *urlString = [url.absoluteString lowercaseString];
+    NSString *scheme = [url.scheme lowercaseString];
+    BOOL isTelephoneURL = [urlString hasPrefix:@"tel:"] || [scheme isEqualToString:@"tel"];
+    BOOL isMailtoURL = [urlString hasPrefix:@"mailto:"] || [scheme isEqualToString:@"mailto"];
+
+    if (isTelephoneURL) {
+        [self handleTelephoneNavigationURL:url];
+        [webView stopLoading];
+        return;
+    } else if (isMailtoURL) {
+        [self handleMailtoNavigationURL:url];
+        [webView stopLoading];
+        return;
+    } else {
+        void (^urlDidChangeBlock)(NSString *) = SalesforceSDKManager.sharedManager.loginWebViewURLDidChange;
+        if (urlDidChangeBlock) {
+            urlDidChangeBlock(url.absoluteString);
+        }
+
+        [SFSDKCoreLogger i:[self class] format:@"%@ host=%@ : path=%@", NSStringFromSelector(_cmd), url.host, url.path];
+        if ([self.delegate respondsToSelector:@selector(oauthCoordinator:didStartLoad:)]) {
+            [self.delegate oauthCoordinator:self didStartLoad:webView];
+        }
+        
+        if ([SFUserAccountManager sharedInstance].showAuthWindowWhileLoading) {
+            [self startWebviewAuthenticationIfNeeded];
+        }
     }
-    
-    if ([SFUserAccountManager sharedInstance].showAuthWindowWhileLoading) {
-        [self startWebviewAuthenticationIfNeeded];
+}
+
+- (void)handleTelephoneNavigationURL:(NSURL *)url {
+    if (!url) {
+        return;
     }
+
+    [SFSDKCoreLogger i:[self class] format:@"Opening telephone URL from OAuth web flow: %@", url.absoluteString];
+    [SFApplicationHelper openURL:url options:@{} completionHandler:nil];
+}
+
+- (void)handleMailtoNavigationURL:(NSURL *)url {
+    if (!url) {
+        return;
+    }
+
+    [SFSDKCoreLogger i:[self class] format:@"Opening mail URL from OAuth web flow: %@", url.absoluteString];
+    [SFApplicationHelper openURL:url options:@{} completionHandler:nil];
 }
 
 - (void)startWebviewAuthenticationIfNeeded {
